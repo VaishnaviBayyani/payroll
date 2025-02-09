@@ -1,0 +1,130 @@
+package payroll1;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
+
+public class generate_payslip extends JFrame implements ActionListener {
+    private JTextArea payslipArea;
+    private JButton printButton, closeButton;
+    private Choice empIdChoice;
+
+    public generate_payslip() {
+        // Set up JFrame
+        setTitle("Generate Payslip");
+        setSize(600, 500);
+        setLayout(new BorderLayout());
+
+        // Create components
+        payslipArea = new JTextArea();
+        payslipArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(payslipArea);
+        add(scrollPane, BorderLayout.CENTER);
+
+        JPanel panel = new JPanel();
+        empIdChoice = new Choice();
+        populateEmployeeIds();
+        panel.add(new JLabel("Select Employee ID:"));
+        panel.add(empIdChoice);
+
+        printButton = new JButton("Generate Payslip");
+        closeButton = new JButton("Close");
+        panel.add(printButton);
+        panel.add(closeButton);
+        add(panel, BorderLayout.NORTH);
+
+        // Add ActionListeners
+        printButton.addActionListener(this);
+        closeButton.addActionListener(this);
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
+
+    private void populateEmployeeIds() {
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/payroll_db", "root", "vysh");
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT Eid FROM new_employee")) {
+
+            while (rs.next()) {
+                String eid = String.valueOf(rs.getInt("Eid"));
+                empIdChoice.add(eid);
+                System.out.println("Employee ID: " + eid);  // Debugging line
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            SwingUtilities.invokeLater(() -> payslipArea.setText("Database connection error."));
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == printButton) {
+            // Generate Pay Slip
+            String empId = empIdChoice.getSelectedItem();
+            System.out.println("Selected Employee ID: " + empId);  // Debugging line
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() {
+                    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/payroll_db", "root", "vysh");
+                         Statement stmt = conn.createStatement()) {
+
+                        String empQuery = "SELECT * FROM new_employee WHERE Eid = " + empId;
+                        System.out.println("Executing query: " + empQuery);  // Debugging line
+                        try (ResultSet empRs = stmt.executeQuery(empQuery)) {
+                            if (empRs.next()) {
+                                StringBuilder payslip = new StringBuilder();
+                                payslip.append("Pay Slip for Employee ID: ").append(empId).append("\n");
+                                payslip.append("Name: ").append(empRs.getString("name")).append("\n");
+                                payslip.append("Position: ").append(empRs.getString("position")).append("\n");
+
+                                // Extract salary details
+                                float hra = empRs.getFloat("HRA");
+                                float da = empRs.getFloat("DR");
+                                float med = empRs.getFloat("medical_allowance");
+                                float pf = empRs.getFloat("PF");
+                                float basicSalary = empRs.getFloat("basic_salary");
+
+                                float grossSalary = hra + da + med + basicSalary;
+                                double tax = (grossSalary * 2.1) / 100;
+                                double netSalary = grossSalary - pf - tax;
+
+                                payslip.append("\nHRA: ").append(hra);
+                                payslip.append("\nDA: ").append(da);
+                                payslip.append("\nMedical Allowance: ").append(med);
+                                payslip.append("\nProvident Fund: ").append(pf);
+                                payslip.append("\nBasic Salary: ").append(basicSalary);
+                                payslip.append("\n-----------------------------------------\n");
+                                payslip.append("Gross Salary: ").append(grossSalary);
+                                payslip.append("\nTax (2.1%): ").append(tax);
+                                payslip.append("\nNet Salary: ").append(netSalary);
+
+                                SwingUtilities.invokeLater(() -> payslipArea.setText(payslip.toString()));
+                            } else {
+                                SwingUtilities.invokeLater(() -> payslipArea.setText("No employee found."));
+                            }
+                        }
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        SwingUtilities.invokeLater(() -> payslipArea.setText("Error fetching employee data."));
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Can add any additional finalization or cleanup here
+                }
+            };
+            worker.execute();
+        } else if (e.getSource() == closeButton) {
+            dispose();
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(generate_payslip::new);
+    }
+}
