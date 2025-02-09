@@ -1,0 +1,70 @@
+package payroll1;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class Connection1 {
+    private Connection conn; // Connection object
+    private Statement stm;   // Statement object
+
+    // Constructor to establish the connection and create the statement
+    public Connection1() {
+        try {
+            // Load the MySQL driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            
+            // Establish the connection
+            String dbURL = "jdbc:mysql://localhost:3306/payroll_db";
+            String username = "root";
+            String password = "vysh";
+            
+            conn = DriverManager.getConnection(dbURL, username, password);
+            
+            // Create a statement object
+            stm = conn.createStatement();
+            System.out.println("Database connection established successfully.");
+        } catch (ClassNotFoundException e) {
+            System.out.println("Error: MySQL Driver not found.");
+            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("Error: Unable to connect to the database.");
+            e.printStackTrace();
+        }
+    }
+
+    // Getter for the Statement object
+    public Statement getStatement() {
+        return stm;
+    }
+
+    // Getter for the Connection object
+    public Connection getConnection() {
+        return conn;
+    }
+
+    // Method to close the resources
+    public void closeConnection() {
+        try {
+            if (stm != null) {
+                stm.close(); // Close the Statement object
+                System.out.println("Statement closed.");
+            }
+            if (conn != null) {
+                conn.close(); // Close the Connection object
+                System.out.println("Connection closed.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error while closing resources.");
+            e.printStackTrace();
+        }
+    }
+
+    // Main method for testing the connection
+    public static void main(String[] args) {
+        Connection1 connection1 = new Connection1();
+        // Close connection after use
+        connection1.closeConnection();
+    }
+}
