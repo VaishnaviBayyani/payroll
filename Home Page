@@ -1,0 +1,120 @@
+package payroll1;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class home_payroll extends JFrame {
+
+    JMenuBar menuBar;
+    JMenu employeeMenu, updateMenu, attendanceMenu, exitMenu;
+    JMenuItem newEmployee, salary, listEmployee, updateEmployee, updateSalary, takeAttendance, listAttendance, generatePaySlip, exit;
+
+    public home_payroll() {
+        super("Home Payroll");
+
+        // Setting up the frame
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Creating a background panel
+        JPanel backgroundPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                ImageIcon background = new ImageIcon("C:\\Users\\Dell\\Downloads\\payroll..jpeg"); // Your image path
+                g.drawImage(background.getImage(), 0, 0, getWidth(), getHeight(), this);
+            }
+        };
+        backgroundPanel.setLayout(new BorderLayout()); // To add components like menu bar
+
+        // Creating menu bar
+        menuBar = new JMenuBar();
+
+        // Employee Menu
+        employeeMenu = new JMenu("Employee");
+        employeeMenu.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        newEmployee = new JMenuItem("New Employee");
+        newEmployee.setAccelerator(KeyStroke.getKeyStroke("ctrl N")); // Shortcut: Ctrl+N
+        salary = new JMenuItem("Salary");
+        salary.setAccelerator(KeyStroke.getKeyStroke("ctrl S")); // Shortcut: Ctrl+S
+        listEmployee = new JMenuItem("List Employee");
+        listEmployee.setAccelerator(KeyStroke.getKeyStroke("ctrl L")); // Shortcut: Ctrl+L
+
+        employeeMenu.add(newEmployee);
+        employeeMenu.add(salary);
+        employeeMenu.add(listEmployee);
+
+        menuBar.add(employeeMenu);
+
+        // Update Menu
+        updateMenu = new JMenu("Update");
+        updateMenu.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        updateEmployee = new JMenuItem("Update Employee");
+        updateEmployee.setAccelerator(KeyStroke.getKeyStroke("ctrl U")); // Shortcut: Ctrl+U
+        updateSalary = new JMenuItem("Update Salary");
+        updateSalary.setAccelerator(KeyStroke.getKeyStroke("ctrl R")); // Shortcut: Ctrl+R
+
+        updateMenu.add(updateEmployee);
+        updateMenu.add(updateSalary);
+
+        menuBar.add(updateMenu);
+
+        // Attendance Menu
+        attendanceMenu = new JMenu("Attendance");
+        attendanceMenu.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        takeAttendance = new JMenuItem("Take Attendance");
+        takeAttendance.setAccelerator(KeyStroke.getKeyStroke("ctrl T")); // Shortcut: Ctrl+T
+        listAttendance = new JMenuItem("List Attendance");
+        listAttendance.setAccelerator(KeyStroke.getKeyStroke("ctrl A")); // Shortcut: Ctrl+A
+        generatePaySlip = new JMenuItem("Generate PaySlip");
+        generatePaySlip.setAccelerator(KeyStroke.getKeyStroke("ctrl P")); // Shortcut: Ctrl+P
+
+        attendanceMenu.add(takeAttendance);
+        attendanceMenu.add(listAttendance);
+        attendanceMenu.add(generatePaySlip);
+
+        menuBar.add(attendanceMenu);
+
+        // Exit Menu
+        exitMenu = new JMenu("Exit");
+        exitMenu.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        exit = new JMenuItem("Exit");
+        exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q")); // Shortcut: Ctrl+Q
+        exitMenu.add(exit);
+
+        menuBar.add(exitMenu);
+
+        // Adding menu bar to the frame
+        setJMenuBar(menuBar);
+
+        // Adding the background panel to the frame
+        setContentPane(backgroundPanel);
+
+        // Add action listeners to menu items
+        addMenuActions();
+    }
+
+    // Method to add action listeners to the menu items
+    private void addMenuActions() {
+        newEmployee.addActionListener(e -> JOptionPane.showMessageDialog(this, "New Employee action triggered."));
+        salary.addActionListener(e -> JOptionPane.showMessageDialog(this, "Manage Salary action triggered."));
+        listEmployee.addActionListener(e -> JOptionPane.showMessageDialog(this, "List Employees action triggered."));
+        updateEmployee.addActionListener(e -> JOptionPane.showMessageDialog(this, "Update Employee action triggered."));
+        updateSalary.addActionListener(e -> JOptionPane.showMessageDialog(this, "Update Salary action triggered."));
+        takeAttendance.addActionListener(e -> JOptionPane.showMessageDialog(this, "Take Attendance action triggered."));
+        listAttendance.addActionListener(e -> JOptionPane.showMessageDialog(this, "List Attendance action triggered."));
+        generatePaySlip.addActionListener(e -> JOptionPane.showMessageDialog(this, "Generate PaySlip action triggered."));
+        exit.addActionListener(e -> System.exit(0)); // Exit the application
+    }
+
+    public static void main(String[] args) {
+        new home_payroll().setVisible(true);
+    }
+}
