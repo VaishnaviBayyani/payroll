@@ -1,0 +1,67 @@
+package payroll1;
+
+import java.sql.*;
+import java.util.Scanner;
+
+public class new_employee {
+    public static void main(String[] args) {
+        String url = "jdbc:mysql://localhost:3306/payroll_db"; // Replace 'payroll_db' with your database name
+        String username = "root"; // Replace with your MySQL username
+        String password = "vysh"; // Replace with your MySQL password
+        
+        Scanner scanner = new Scanner(System.in);
+
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            System.out.println("Connected to the database!");
+
+            // Adding a new employee
+            System.out.println("Enter Employee Details:");
+            System.out.print("Name: ");
+            String name = scanner.nextLine();
+            System.out.print("Gender (Male/Female): ");
+            String gender = scanner.nextLine();
+            System.out.print("Address: ");
+            String address = scanner.nextLine();
+            System.out.print("State: ");
+            String state = scanner.nextLine();
+            System.out.print("City: ");
+            String city = scanner.nextLine();
+            System.out.print("Email: ");
+            String email = scanner.nextLine();
+            System.out.print("Phone: ");
+            String phone = scanner.nextLine();
+
+            String insertQuery = "INSERT INTO employees (name, gender, address, state, city, email, phone) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement pstmt = conn.prepareStatement(insertQuery)) {
+                pstmt.setString(1, name);
+                pstmt.setString(2, gender);
+                pstmt.setString(3, address);
+                pstmt.setString(4, state);
+                pstmt.setString(5, city);
+                pstmt.setString(6, email);
+                pstmt.setString(7, phone);
+                pstmt.executeUpdate();
+                System.out.println("Employee record inserted successfully!");
+            }
+
+            // Fetching and displaying all employee records
+            String selectQuery = "SELECT * FROM employees";
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(selectQuery)) {
+                System.out.println("Employee Records:");
+                System.out.printf("%-5s %-20s %-10s %-30s %-15s %-15s %-30s %-15s%n", "ID", "Name", "Gender", "Address", "State", "City", "Email", "Phone");
+                while (rs.next()) {
+                    System.out.printf("%-5d %-20s %-10s %-30s %-15s %-15s %-30s %-15s%n",
+                            rs.getInt("id"), rs.getString("name"), rs.getString("gender"),
+                            rs.getString("address"), rs.getString("state"),
+                            rs.getString("city"), rs.getString("email"), rs.getString("phone"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Database connection failed!");
+            e.printStackTrace();
+        } finally {
+            scanner.close();
+        }
+    }
+}
