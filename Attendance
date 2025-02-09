@@ -1,0 +1,103 @@
+package payroll1;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.sql.*;
+
+public class Attendance extends JFrame implements ActionListener {
+    JLabel lblEmployeeID, lblFirstHalf, lblSecondHalf;
+    Choice chEmployeeID, chFirstHalf, chSecondHalf;
+    JButton btnSubmit;
+
+    public Attendance() {
+        // Frame properties
+        super("Mark Attendance");
+        setSize(400, 300);
+        setLocation(300, 200);
+        setLayout(new GridLayout(4, 2, 10, 10));
+
+        // Initialize components
+        lblEmployeeID = new JLabel("Employee ID:");
+        lblFirstHalf = new JLabel("First Half:");
+        lblSecondHalf = new JLabel("Second Half:");
+
+        chEmployeeID = new Choice();
+        chFirstHalf = new Choice();
+        chSecondHalf = new Choice();
+
+        chFirstHalf.add("Present");
+        chFirstHalf.add("Absent");
+
+        chSecondHalf.add("Present");
+        chSecondHalf.add("Absent");
+
+        btnSubmit = new JButton("Submit");
+        btnSubmit.addActionListener(this);
+
+        // Add components to frame
+        add(lblEmployeeID);
+        add(chEmployeeID);
+        add(lblFirstHalf);
+        add(chFirstHalf);
+        add(lblSecondHalf);
+        add(chSecondHalf);
+        add(btnSubmit);
+
+        // Fetch employee IDs from the database
+        try {
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/payroll_db", "root", "vysh");
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT Eid FROM new_employee");
+
+            while (rs.next()) {
+                chEmployeeID.add(rs.getString("Eid"));
+            }
+
+            con.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error fetching employee data from database.");
+        }
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == btnSubmit) {
+            try {
+                // Fetch values from the form
+                int id = Integer.parseInt(chEmployeeID.getSelectedItem());
+                String firstHalf = chFirstHalf.getSelectedItem();
+                String secondHalf = chSecondHalf.getSelectedItem();
+                String date = new java.util.Date().toString();
+
+                
+                Connection con = DriverManager.getConnection(
+                    "jdbc:mysql://localhost:3306/payroll_db", "root", "vysh");
+                String query = "INSERT INTO attendance (id, first_half, second_half, date) VALUES (?, ?, ?, ?)";
+                PreparedStatement pstmt = con.prepareStatement(query);
+                pstmt.setInt(1, id);
+                pstmt.setString(2, firstHalf);
+                pstmt.setString(3, secondHalf);
+                pstmt.setString(4, date);
+
+                int rows = pstmt.executeUpdate();
+                if (rows > 0) {
+                    JOptionPane.showMessageDialog(null, "Attendance marked successfully!");
+                }
+
+                con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error marking attendance in database.");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        new Attendance().setVisible(true);
+    }
+}
