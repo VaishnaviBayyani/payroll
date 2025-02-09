@@ -1,0 +1,222 @@
+package payroll1;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.sql.*;
+
+public class salary extends JFrame implements ActionListener {
+
+    private Connection1 dbConnection; // Declare Connection1 object
+    private JComboBox<String> cbEid;   // ComboBox to select Employee ID
+    private JTextField tfName, tfPosition, tfPF, tfMedical, tfHRA, tfDR, tfOtherAllowances, tfBasicSalary;
+    private JButton btnClose, btnFetchDetails, btnUpdate;
+
+    public salary() {
+        // Create a Connection1 object which will automatically establish the connection
+        dbConnection = new Connection1();
+
+        // Initialize GUI components
+        cbEid = new JComboBox<>();
+        tfName = new JTextField(15);
+        tfPosition = new JTextField(15);
+        tfPF = new JTextField(15);
+        tfMedical = new JTextField(15);
+        tfHRA = new JTextField(15);
+        tfDR = new JTextField(15);
+        tfOtherAllowances = new JTextField(15);
+        tfBasicSalary = new JTextField(15);  // New text field for basic salary
+        
+        btnClose = new JButton("Close");
+        btnFetchDetails = new JButton("Fetch Details");
+        btnUpdate = new JButton("Update");  // New button for updating details
+
+        // Add action listeners to buttons
+        btnClose.addActionListener(this);
+        btnFetchDetails.addActionListener(this);
+        btnUpdate.addActionListener(this);  // Add action listener for update button
+
+        // Layout the components
+        setLayout(new GridLayout(13, 2));  // Changed grid layout to accommodate the new field
+        add(new JLabel("Employee ID:"));
+        add(cbEid);
+        add(new JLabel("Employee Name:"));
+        add(tfName);
+        add(new JLabel("Position:"));
+        add(tfPosition);
+        add(new JLabel("Provident Fund (PF):"));
+        add(tfPF);
+        add(new JLabel("Medical Allowance:"));
+        add(tfMedical);
+        add(new JLabel("House Rent Allowance (HRA):"));
+        add(tfHRA);
+        add(new JLabel("Dearness Allowance (DR):"));
+        add(tfDR);
+        add(new JLabel("Other Allowances:"));
+        add(tfOtherAllowances);
+        add(new JLabel("Basic Salary:"));  // Label for the new field
+        add(tfBasicSalary);  // New text field for basic salary
+        add(btnFetchDetails);
+        add(btnUpdate);  // Add the update button
+        add(btnClose);
+
+        // Populate Employee ID combo box
+        populateEmployeeIds();
+
+        setTitle("Payroll System");
+        setSize(400, 550);  // Adjusted size to fit the new field and button
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
+
+    private void populateEmployeeIds() {
+        // Fetch Employee IDs from the database and add them to the combo box
+        String query = "SELECT Eid FROM new_employee";
+        try (Statement stmt = dbConnection.getConnection().createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            // Clear any existing items in the combo box
+            cbEid.removeAllItems();
+
+            // Add a placeholder item
+            cbEid.addItem("Select Employee ID");
+
+            // Add Employee IDs to the combo box
+            while (rs.next()) {
+                cbEid.addItem(rs.getString("Eid"));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching Employee IDs: " + ex.getMessage());
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == btnClose) {
+            // Close the connection when the "Close" button is clicked
+            dbConnection.closeConnection();
+        }
+        else if (e.getSource() == cbEid) {
+            // Automatically fetch and display employee details when an Employee ID is selected
+            String eid = (String) cbEid.getSelectedItem();
+            if (eid != null && !eid.equals("Select Employee ID")) {
+                fetchEmployeeDetails(eid); // Automatically fetch details for the selected Employee ID
+            }
+        }
+        else if (e.getSource() == btnFetchDetails) {
+            // When "Fetch Details" is clicked, fetch details based on the selected Employee ID
+            String eid = (String) cbEid.getSelectedItem();
+
+            if (eid == null || eid.equals("Select Employee ID")) {
+                JOptionPane.showMessageDialog(this, "Please select a valid Employee ID.");
+                return;
+            }
+
+            fetchEmployeeDetails(eid); // Fetch employee details when clicked
+        }
+        else if (e.getSource() == btnUpdate) {
+            // When the "Update" button is clicked, update the selected employee's details
+            String eid = (String) cbEid.getSelectedItem();
+            String name = tfName.getText();
+            String position = tfPosition.getText();
+            String pf = tfPF.getText();
+            String medical = tfMedical.getText();
+            String hra = tfHRA.getText();
+            String dr = tfDR.getText();
+            String otherAllowances = tfOtherAllowances.getText();
+            String basicSalary = tfBasicSalary.getText();  // Get value of Basic Salary
+            
+            if (eid == null || eid.equals("Select Employee ID") || name.isEmpty() || position.isEmpty() || pf.isEmpty() || medical.isEmpty() || hra.isEmpty() || dr.isEmpty() || otherAllowances.isEmpty() || basicSalary.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all fields.");
+                return;
+            }
+            
+            // Validate PF to be a valid numeric value
+            double pfValue = 0, basicSalaryValue = 0;
+            try {
+                pfValue = Double.parseDouble(pf);
+                basicSalaryValue = Double.parseDouble(basicSalary);  // Convert basic salary to double
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter valid numbers for Provident Fund (PF) and Basic Salary.");
+                return;
+            }
+
+            // Validate other fields for numeric values
+            double medicalValue = 0, hraValue = 0, drValue = 0, otherAllowancesValue = 0;
+            try {
+                medicalValue = Double.parseDouble(medical);
+                hraValue = Double.parseDouble(hra);
+                drValue = Double.parseDouble(dr);
+                otherAllowancesValue = Double.parseDouble(otherAllowances);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter valid numbers for allowances.");
+                return;
+            }
+
+            // Check if the employee exists before updating
+            String checkQuery = "SELECT * FROM new_employee WHERE Eid = ?";
+            try (PreparedStatement pst = dbConnection.getConnection().prepareStatement(checkQuery)) {
+                pst.setInt(1, Integer.parseInt(eid));
+                ResultSet rs = pst.executeQuery();
+                
+                if (!rs.next()) {
+                    JOptionPane.showMessageDialog(this, "Employee does not exist. Cannot update.");
+                    return; // Exit if employee does not exist
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error checking employee existence: " + ex.getMessage());
+            }
+
+            // Update data in the new_employee table
+            String query = "UPDATE new_employee SET name = ?, position = ?, PF = ?, medical_allowance = ?, HRA = ?, DR = ?, other_allowances = ?, basic_salary = ? WHERE Eid = ?";
+            try (PreparedStatement pst = dbConnection.getConnection().prepareStatement(query)) {
+                pst.setString(1, name);
+                pst.setString(2, position);
+                pst.setDouble(3, pfValue); // Using validated PF value
+                pst.setDouble(4, medicalValue);
+                pst.setDouble(5, hraValue);
+                pst.setDouble(6, drValue);
+                pst.setDouble(7, otherAllowancesValue);
+                pst.setDouble(8, basicSalaryValue); // Set basic salary value
+                pst.setInt(9, Integer.parseInt(eid));
+
+                pst.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Employee details updated successfully!");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error updating data: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void fetchEmployeeDetails(String eid) {
+        // Fetch employee details based on the selected Employee ID
+        String query = "SELECT * FROM new_employee WHERE Eid = ?";
+        try (PreparedStatement pst = dbConnection.getConnection().prepareStatement(query)) {
+            pst.setInt(1, Integer.parseInt(eid));
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                tfName.setText(rs.getString("name"));
+                tfPosition.setText(rs.getString("position"));
+                tfPF.setText(String.valueOf(rs.getDouble("PF")));
+                tfMedical.setText(String.valueOf(rs.getDouble("medical_allowance")));
+                tfHRA.setText(String.valueOf(rs.getDouble("HRA")));
+                tfDR.setText(String.valueOf(rs.getDouble("DR")));
+                tfOtherAllowances.setText(String.valueOf(rs.getDouble("other_allowances")));
+                tfBasicSalary.setText(String.valueOf(rs.getDouble("basic_salary")));
+            } else {
+                JOptionPane.showMessageDialog(this, "Employee not found.");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching employee details: " + ex.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        new salary();
+    }
+}
