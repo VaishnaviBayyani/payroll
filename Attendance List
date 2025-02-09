@@ -1,0 +1,101 @@
+package payroll1;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class list_attendance extends JFrame implements ActionListener {
+    JTable table; // Table to display attendance data
+    JButton printButton; // Button to print the table
+    String[] columnNames = {"Employee ID", "First Half", "Second Half", "Date"};
+    List<String[]> dataList = new ArrayList<>(); // Dynamic list to hold attendance data
+
+    // Constructor
+    public list_attendance() {
+        super("List Attendance");
+
+        setSize(900, 400);
+        setLocation(100, 100);
+        setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Fetch data and populate the table
+        fetchAttendanceData();
+
+        // Convert the List to a 2D array for the table
+        String[][] data = new String[dataList.size()][4];
+        for (int i = 0; i < dataList.size(); i++) {
+            data[i] = dataList.get(i);
+        }
+
+        // Create and set up the table
+        table = new JTable(data, columnNames);
+        table.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Add print button
+        printButton = new JButton("Print");
+        printButton.setFont(new Font("Arial", Font.BOLD, 14));
+        printButton.setBackground(Color.BLUE);
+        printButton.setForeground(Color.WHITE);
+        printButton.addActionListener(this);
+        add(printButton, BorderLayout.SOUTH);
+    }
+
+    // Fetch attendance data from the database
+    private void fetchAttendanceData() {
+        try {
+            Connection1 connection = new Connection1(); // Using the Connection1 class
+            String query = "SELECT Eid, first_half, second_half, date FROM attendance";
+            ResultSet rs = connection.getStatement().executeQuery(query);
+
+            while (rs.next()) {
+                String[] rowData = new String[4];
+                rowData[0] = rs.getString("Eid");
+                rowData[1] = rs.getString("first_half");
+                rowData[2] = rs.getString("second_half");
+                rowData[3] = rs.getString("date");
+                dataList.add(rowData); // Add each row to the list
+            }
+
+            connection.closeConnection();
+        } catch (SQLException e) {
+            System.out.println("Error fetching attendance data.");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("Unexpected error.");
+            e.printStackTrace();
+        }
+    }
+
+    // Handle button click events
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == printButton) {
+            try {
+                table.print();
+            } catch (Exception ex) {
+                System.out.println("Error printing the table.");
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Main method to run the application
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new list_attendance().setVisible(true);
+            } catch (Exception e) {
+                System.out.println("Error initializing the application.");
+                e.printStackTrace();
+            }
+        });
+    }
+}
