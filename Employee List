@@ -1,0 +1,65 @@
+package payroll1;
+
+import javax.swing.*;
+import java.awt.*;
+import java.sql.*;
+
+public class List_Employee {
+    // Define the frame and table components
+    JFrame frame;
+    JTable table;
+    JScrollPane scrollPane;
+
+    public List_Employee() {
+        // Set up the frame
+        frame = new JFrame("Employee List");
+        frame.setSize(900, 400);
+        frame.setLocation(100, 100);
+        frame.setResizable(false);
+
+        // Define the column names for the table
+        String[] columns = {"Eid", "Name", "Gender", "State", "City", "Email", "Phone"};
+        String[][] data = new String[20][7]; // Adjust the number of rows as necessary
+
+        // Fetch employee data from the database
+        try {
+            // Establish database connection
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/payroll_db", "root", "vysh");
+            Statement stmt = con.createStatement();
+            String query = "SELECT Eid, name, gender, state, city, email, phone FROM new_employee";
+            ResultSet rs = stmt.executeQuery(query);
+
+            int i = 0;
+            while (rs.next()) {
+                // Fill the table data array with values from the ResultSet
+                data[i][0] = rs.getString("Eid");
+                data[i][1] = rs.getString("name");
+                data[i][2] = rs.getString("gender");
+                data[i][3] = rs.getString("state");
+                data[i][4] = rs.getString("city");
+                data[i][5] = rs.getString("email");
+                data[i][6] = rs.getString("phone");
+                i++;
+            }
+
+            // Create the JTable with the retrieved data
+            table = new JTable(data, columns);
+            scrollPane = new JScrollPane(table); // Add table to scroll pane
+            frame.add(scrollPane); // Add scroll pane to frame
+
+            con.close(); // Close the connection
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Set the frame visibility
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    public static void main(String[] args) {
+        // Instantiate the List_Employee class to display the employee list
+        new List_Employee();
+    }
+}
